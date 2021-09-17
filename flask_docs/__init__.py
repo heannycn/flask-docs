@@ -59,6 +59,7 @@ class ApiDoc(object):
         app.config.setdefault("API_DOC_ENABLE", True)
         app.config.setdefault("API_DOC_CDN", False)
         app.config.setdefault("API_DOC_RESTFUL_EXCLUDE", [])
+        app.config.setdefault("API_DOC_TEMP", False)
         app.config.setdefault("API_DOC_MEMBER_NAME", False)
         app.config.setdefault("API_DOC_MEMBER", {} if app.config['API_DOC_MEMBER_NAME'] else [])
         app.config.setdefault(
@@ -80,7 +81,11 @@ class ApiDoc(object):
                 ],
                 str,
             )
-            self._check_value_type(["API_DOC_ENABLE", "API_DOC_CDN"], bool)
+            self._check_value_type([
+                "API_DOC_ENABLE",
+                "API_DOC_CDN",
+                "API_DOC_TEMP",
+                "API_DOC_MEMBER_NAME"], bool)
             self._check_value_type(
                 [
                     # "API_DOC_MEMBER",
@@ -263,14 +268,23 @@ class ApiDoc(object):
             else:
                 member_list = current_app.config["API_DOC_MEMBER"].keys()
             if f not in member_list:
-                continue
+                if f.split('.')[-1] not in ['html', 'shtml']:
+                    continue
+                elif current_app.config['API_DOC_TEMP'] is True:
+                    if current_app.config['API_DOC_TEMP'] is True:
+                        f = 'pages'
+                        if current_app.config['API_DOC_MEMBER_NAME'] is True:
+                            current_app.config["API_DOC_MEMBER"].setdefault(f, '页面')
+                        else:
+                            current_app.config["API_DOC_MEMBER"].append('pages')
+                else:
+                    continue
+            # and
 
             f_capitalize = f.capitalize()
+            data_dict.setdefault(f_capitalize, {"children": []})
             if current_app.config['API_DOC_MEMBER_NAME'] is True:
                 data_dict[f_capitalize]["name"] = current_app.config["API_DOC_MEMBER"][f].capitalize()
-
-            if f_capitalize not in data_dict:
-                data_dict[f_capitalize] = {"children": []}
 
             api = {
                 "name": "",

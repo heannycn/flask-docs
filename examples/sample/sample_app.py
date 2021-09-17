@@ -13,7 +13,7 @@ Author:
     kwkw
 """
 
-from flask import Blueprint, Flask, jsonify
+from flask import Blueprint, Flask, jsonify, render_template
 
 from flask_docs import ApiDoc
 
@@ -29,7 +29,14 @@ app = Flask(__name__)
 # app.config["API_DOC_METHODS_LIST"] = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 
 # Custom url_prefix
-# app.config["API_DOC_URL_PREFIX"] = "/docs/api"
+app.config["API_DOC_URL_PREFIX"] = "/docs"
+
+# 显示根目录下的html路径分类
+app.config["API_DOC_TEMP"] = True
+
+# 使用自定义名
+# app.config["API_DOC_MEMBER_NAME"] = True
+# app.config["API_DOC_MEMBER"] = {"api": "API接口", "platform": "platform 接口"}
 
 # Api Document needs to be displayed
 app.config["API_DOC_MEMBER"] = ["api", "platform"]
@@ -43,6 +50,15 @@ ApiDoc(
 
 api = Blueprint("api", __name__)
 platform = Blueprint("platform", __name__)
+
+
+@app.route('/index.html')
+def index_html():
+    return render_template('index.html')
+
+@app.route('/demo.html')
+def demo_html():
+    return render_template('demo.html')
 
 
 @api.route("/add_data", methods=["POST"])
