@@ -43,8 +43,15 @@ app = Flask(__name__)
 # 需要排除的 RESTful Api 文档
 # app.config["API_DOC_RESTFUL_EXCLUDE"] = ["todo"]
 
+# 显示根目录下的html路径分类
+app.config["API_DOC_TEMP"] = True
+
 # 需要显示文档的 Api
 app.config["API_DOC_MEMBER"] = ["api", "platform"]
+
+# 使用自定义名
+# app.config["API_DOC_MEMBER_NAME"] = True
+# app.config["API_DOC_MEMBER"] = {"api": "API接口", "platform": "platform 接口"}
 
 ApiDoc(
     app,
