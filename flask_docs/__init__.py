@@ -58,8 +58,9 @@ class ApiDoc(object):
         )
         app.config.setdefault("API_DOC_ENABLE", True)
         app.config.setdefault("API_DOC_CDN", False)
-        app.config.setdefault("API_DOC_MEMBER", [])
         app.config.setdefault("API_DOC_RESTFUL_EXCLUDE", [])
+        app.config.setdefault("API_DOC_MEMBER_NAME", False)
+        app.config.setdefault("API_DOC_MEMBER", {} if app.config['API_DOC_MEMBER_NAME'] else [])
         app.config.setdefault(
             "API_DOC_METHODS_LIST", ["GET", "POST", "PUT", "DELETE", "PATCH"]
         )
@@ -82,11 +83,17 @@ class ApiDoc(object):
             self._check_value_type(["API_DOC_ENABLE", "API_DOC_CDN"], bool)
             self._check_value_type(
                 [
-                    "API_DOC_MEMBER",
+                    # "API_DOC_MEMBER",
                     "API_DOC_RESTFUL_EXCLUDE",
                     "API_DOC_METHODS_LIST",
                 ],
                 list,
+            )
+            self._check_value_type(
+                [
+                    "API_DOC_MEMBER"
+                ],
+                dict if current_app.config['API_DOC_MEMBER_NAME'] else list,
             )
 
             if not current_app.config["API_DOC_ENABLE"]:
@@ -251,10 +258,16 @@ class ApiDoc(object):
 
         for rule in current_app.url_map.iter_rules():
             f = str(rule).split("/")[1]
-            if f not in current_app.config["API_DOC_MEMBER"]:
+            if current_app.config['API_DOC_MEMBER_NAME'] is False:
+                member_list = current_app.config["API_DOC_MEMBER"]
+            else:
+                member_list = current_app.config["API_DOC_MEMBER"].keys()
+            if f not in member_list:
                 continue
 
             f_capitalize = f.capitalize()
+            if current_app.config['API_DOC_MEMBER_NAME'] is True:
+                data_dict[f_capitalize]["name"] = current_app.config["API_DOC_MEMBER"][f].capitalize()
 
             if f_capitalize not in data_dict:
                 data_dict[f_capitalize] = {"children": []}
@@ -341,12 +354,12 @@ class ApiDoc(object):
     def _clean_doc(self, doc_src):
         return (
             doc_src.split("\n\n")[0]
-            .split("\n")[0]
-            .strip(" ")
-            .strip("\n\n")
-            .strip(" ")
-            .strip("\n")
-            .strip(" ")
+                .split("\n")[0]
+                .strip(" ")
+                .strip("\n\n")
+                .strip(" ")
+                .strip("\n")
+                .strip(" ")
         )
 
     def _get_doc_name_extra_doc_md(self, doc_src):
@@ -359,11 +372,11 @@ class ApiDoc(object):
 
         doc = (
             doc.replace(name_extra, "", 1)
-            .rstrip(" ")
-            .strip("\n\n")
-            .rstrip(" ")
-            .strip("\n")
-            .rstrip(" ")
+                .rstrip(" ")
+                .strip("\n\n")
+                .rstrip(" ")
+                .strip("\n")
+                .rstrip(" ")
         )
 
         if doc == "":

@@ -33,115 +33,117 @@ Author:
 </head>
 
 <body>
-    <div id="app" v-cloak>
-        <el-card class="box-card">
-            <el-container>
-                <el-header>
-                    <el-menu :default-active="headerIndex" class="el-menu-demo" mode="horizontal">
-                        <el-menu-item index="1">{{ titleVersion }}</el-menu-item>
-                        <el-button class="download" type="text" icon="el-icon-download" @click="download"></el-button>
-                        <el-button class="debug" type="text" :icon="debugShowIcon" @click="debugShow"></el-button>
-                    </el-menu>
-                </el-header>
-                <el-main v-loading="loading" :style="docDisplay">
+<div id="app" v-cloak>
+    <el-card class="box-card">
+        <el-container>
+            <el-header>
+                <el-menu :default-active="headerIndex" class="el-menu-demo" mode="horizontal">
+                    <el-menu-item index="1">{{ titleVersion }}</el-menu-item>
+                    <el-button class="download" type="text" icon="el-icon-download" @click="download"></el-button>
+                    <el-button class="debug" type="text" :icon="debugShowIcon" @click="debugShow"></el-button>
+                </el-menu>
+            </el-header>
+            <el-main v-loading="loading" :style="docDisplay">
+                <el-row>
+                    <el-col :span="8">
+                        <el-input placeholder="Filter keyword" v-model="treeFilterText" style="padding-bottom:10px">
+                        </el-input>
+                        <div :style="menuStyle">
+                            <el-tree class="filter-tree" :data="treeDataNew" :props="treeDefaultProps" node-key="id"
+                                     highlight-current :filter-node-method="treeFilterNode" ref="apiTree"
+                                     @node-click="treeNodeClick">
+                            </el-tree>
+                        </div>
+                    </el-col>
+                    <el-col :span="16" style="padding-left:20px">
+                        <div :style="contentStyle">
+                            <article class="markdown-body">
+                                <div id="md"></div>
+                            </article>
+                        </div>
+                    </el-col>
+                </el-row>
+            </el-main>
+            <el-main :style="debugDisplay">
+                <el-card class="box-card">
+                    <el-divider content-position="left">Method && URL</el-divider>
+                    <el-select v-model="methodValue" placeholder="Select" style="width:8%;min-width:130px;">
+                        <el-option v-for="item in methodOptions" :key="item.value" :label="item.label"
+                                   :value="item.value">
+                        </el-option>
+                    </el-select>
+                    <el-select v-model="hostValue" filterable allow-create clearable default-first-option
+                               placeholder="Select" style="width:20%;min-width:160px;">
+                        <el-option v-for="item in hostOptions" :key="item.value" :label="item.label"
+                                   :value="item.value">
+                        </el-option>
+                    </el-select>
+                    <el-select v-model="urlValue" filterable allow-create clearable default-first-option
+                               placeholder="Select" style="width:50%;;min-width:209px;">
+                        <el-option v-for="item in urlOptions" :key="item.value" :label="item.label"
+                                   :value="item.value">
+                        </el-option>
+                    </el-select>
+                    <el-button type="primary" style="width:6%;min-width:80px;" @click="sendRequest"
+                               :loading="loading">Send
+                    </el-button>
+                </el-card>
+                <el-card class="box-card" style="margin-top:10px">
+                    <el-divider content-position="left">Headers</el-divider>
                     <el-row>
-                        <el-col :span="8">
-                            <el-input placeholder="Filter keyword" v-model="treeFilterText" style="padding-bottom:10px">
-                            </el-input>
-                            <div :style="menuStyle">
-                                <el-tree class="filter-tree" :data="treeDataNew" :props="treeDefaultProps" node-key="id"
-                                    highlight-current :filter-node-method="treeFilterNode" ref="apiTree"
-                                    @node-click="treeNodeClick">
-                                </el-tree>
-                            </div>
-                        </el-col>
-                        <el-col :span="16" style="padding-left:20px">
-                            <div :style="contentStyle">
-                                <article class="markdown-body">
-                                    <div id="md"></div>
-                                </article>
-                            </div>
-                        </el-col>
-                    </el-row>
-                </el-main>
-                <el-main :style="debugDisplay">
-                    <el-card class="box-card">
-                        <el-divider content-position="left">Method && URL</el-divider>
-                        <el-select v-model="methodValue" placeholder="Select" style="width:8%;min-width:130px;">
-                            <el-option v-for="item in methodOptions" :key="item.value" :label="item.label"
-                                :value="item.value">
-                            </el-option>
-                        </el-select>
-                        <el-select v-model="hostValue" filterable allow-create clearable default-first-option
-                            placeholder="Select" style="width:20%;min-width:160px;">
-                            <el-option v-for="item in hostOptions" :key="item.value" :label="item.label"
-                                :value="item.value">
-                            </el-option>
-                        </el-select>
-                        <el-select v-model="urlValue" filterable allow-create clearable default-first-option
-                            placeholder="Select" style="width:50%;;min-width:209px;">
-                            <el-option v-for="item in urlOptions" :key="item.value" :label="item.label"
-                                :value="item.value">
-                            </el-option>
-                        </el-select>
-                        <el-button type="primary" style="width:6%;min-width:80px;" @click="sendRequest"
-                            :loading="loading">Send</el-button>
-                    </el-card>
-                    <el-card class="box-card" style="margin-top:10px">
-                        <el-divider content-position="left">Headers</el-divider>
-                        <el-row>
-                            <el-input v-model="headerNameInput" size="small" style="width:20%;min-width:160px;"
-                                placeholder="name" clearable>
-                            </el-input>
-                            <el-input v-model="headerValueInput" size="small" style="width:20%;min-width:160px;"
-                                placeholder="value" clearable>
-                            </el-input>
-                            <el-button type="primary" size="small" style="width:60px;" @click="addHeader">Add
-                            </el-button>
-                        </el-row></br>
-                        <el-row>
-                            <el-tag v-for="tag in headerTags" :key="tag.name" closable :type="tag.type"
-                                style="margin-left: 10px;" @close="delHeader(tag)">
-                                {{tag.name.length>50?tag.name.substring(0,49)+"...":tag.name}}
-                            </el-tag>
-                        </el-row>
-                    </el-card>
-                    <el-card class="box-card" style="margin-top:10px">
-                        <el-divider content-position="left">Body</el-divider>
-                        <el-row>
-                            <el-input type="textarea" :autosize="{ minRows: 6}" placeholder="Request Body"
-                                v-model="bodyTextarea">
-                            </el-input>
-                        </el-row>
-                    </el-card>
-                    <el-card class="box-card" style="margin-top:10px">
-                        <el-divider content-position="left">Response</el-divider>
-                        <el-button class="copyResponse" type="text" icon="el-icon-document-copy" @click="copyResponse">
+                        <el-input v-model="headerNameInput" size="small" style="width:20%;min-width:160px;"
+                                  placeholder="name" clearable>
+                        </el-input>
+                        <el-input v-model="headerValueInput" size="small" style="width:20%;min-width:160px;"
+                                  placeholder="value" clearable>
+                        </el-input>
+                        <el-button type="primary" size="small" style="width:60px;" @click="addHeader">Add
                         </el-button>
-                        <el-tabs type="card" v-model="responseTabsActiveName">
-                            <el-tab-pane label="Headers" name="Headers">
-                                <div id="responseHeaderText">
-                                    <pre><code>&nbsp;</code></pre>
-                                </div>
-                            </el-tab-pane>
-                            <el-tab-pane label="Response" name="Response">
-                                <div id="responseResponseText">
-                                    <pre><code>&nbsp;</code></pre>
-                                </div>
-                            </el-tab-pane>
-                            <el-tab-pane label="Preview" name="Preview">
-                                <div id="responsePreviewText">
-                                    <pre><code>&nbsp;</code></pre>
-                                </div>
-                            </el-tab-pane>
-                        </el-tabs>
-                    </el-card>
-                </el-main>
-            </el-container>
-            <a class="project-name-version" href="https://github.com/kwkwc/flask-docs/" target="_blank">{{PROJECT_NAME}}
-                v{{PROJECT_VERSION}}</a>
-        </el-card>
-    </div>
+                    </el-row>
+                    </br>
+                    <el-row>
+                        <el-tag v-for="tag in headerTags" :key="tag.name" closable :type="tag.type"
+                                style="margin-left: 10px;" @close="delHeader(tag)">
+                            {{ tag.name.length>50?tag.name.substring(0,49)+"...":tag.name}}
+                        </el-tag>
+                    </el-row>
+                </el-card>
+                <el-card class="box-card" style="margin-top:10px">
+                    <el-divider content-position="left">Body</el-divider>
+                    <el-row>
+                        <el-input type="textarea" :autosize="{ minRows: 6}" placeholder="Request Body"
+                                  v-model="bodyTextarea">
+                        </el-input>
+                    </el-row>
+                </el-card>
+                <el-card class="box-card" style="margin-top:10px">
+                    <el-divider content-position="left">Response</el-divider>
+                    <el-button class="copyResponse" type="text" icon="el-icon-document-copy" @click="copyResponse">
+                    </el-button>
+                    <el-tabs type="card" v-model="responseTabsActiveName">
+                        <el-tab-pane label="Headers" name="Headers">
+                            <div id="responseHeaderText">
+                                <pre><code>&nbsp;</code></pre>
+                            </div>
+                        </el-tab-pane>
+                        <el-tab-pane label="Response" name="Response">
+                            <div id="responseResponseText">
+                                <pre><code>&nbsp;</code></pre>
+                            </div>
+                        </el-tab-pane>
+                        <el-tab-pane label="Preview" name="Preview">
+                            <div id="responsePreviewText">
+                                <pre><code>&nbsp;</code></pre>
+                            </div>
+                        </el-tab-pane>
+                    </el-tabs>
+                </el-card>
+            </el-main>
+        </el-container>
+        <a class="project-name-version" href="https://github.com/kwkwc/flask-docs/" target="_blank">{{ PROJECT_NAME }}
+            v{{ PROJECT_VERSION }}</a>
+    </el-card>
+</div>
 </body>
 
 <!-- ___JS_TEMPLATE___ -->
@@ -182,11 +184,15 @@ Author:
             urlValueBak: "",
             headerNameInput: "",
             headerValueInput: "",
-            headerTagsTypeDict: { 0: "primary", 1: "success", 2: "info", 3: "warning", 4: "danger" },
+            headerTagsTypeDict: {0: "primary", 1: "success", 2: "info", 3: "warning", 4: "danger"},
             headerTags: [],
             bodyTextarea: "",
             responseTabsActiveName: "Headers",
-            responseTabsActiveDict: { "Headers": "responseHeaderText", "Response": "responseResponseText", "Preview": "responsePreviewText" }
+            responseTabsActiveDict: {
+                "Headers": "responseHeaderText",
+                "Response": "responseResponseText",
+                "Preview": "responsePreviewText"
+            }
         },
         created: function () {
             this.changeWindowSize()
@@ -216,26 +222,26 @@ Author:
             getData() {
                 this.loading = true
                 axios.get("data").then(res => {
-                    this.treeData = res.data.data
-                    this.PROJECT_NAME = res.data.PROJECT_NAME
-                    this.PROJECT_VERSION = res.data.PROJECT_VERSION
-                    this.title = res.data.title
-                    this.version = res.data.version
-                    this.description = res.data.description
-                    this.titleVersion = this.title + " (" + this.version + ")"
-                    this.noDocText = res.data.noDocText
-                    this.hostValue = res.data.host
-                    document.title = this.titleVersion
-                    let md = "# " + this.titleVersion
-                    if (this.description != "") {
-                        md += "\n> " + this.description
-                    }
-                    document.getElementById("md").innerHTML = marked(md)
-                    this.makeUrlOptions(res.data.data)
-                    this.getUrlCache()
-                    this.jumpAnchor()
-                    this.loading = false
-                },
+                        this.treeData = res.data.data
+                        this.PROJECT_NAME = res.data.PROJECT_NAME
+                        this.PROJECT_VERSION = res.data.PROJECT_VERSION
+                        this.title = res.data.title
+                        this.version = res.data.version
+                        this.description = res.data.description
+                        this.titleVersion = this.title + " (" + this.version + ")"
+                        this.noDocText = res.data.noDocText
+                        this.hostValue = res.data.host
+                        document.title = this.titleVersion
+                        let md = "# " + this.titleVersion
+                        if (this.description != "") {
+                            md += "\n> " + this.description
+                        }
+                        document.getElementById("md").innerHTML = marked(md)
+                        this.makeUrlOptions(res.data.data)
+                        this.getUrlCache()
+                        this.jumpAnchor()
+                        this.loading = false
+                    },
                     err => {
                         this.$message.error("Error");
                         this.loading = false
@@ -257,8 +263,7 @@ Author:
                     md += "- " + con.method + "\n\n"
                 }
                 if (con.doc == this.noDocText && con.doc_md != "") {
-                }
-                else {
+                } else {
                     md += "### doc" + "\n"
                     md += "```doc\n" + con.doc + "\n```\n\n"
                 }
@@ -279,7 +284,7 @@ Author:
                     })
                     md += "\n\n"
                 })
-                saveAs(new Blob([md], { type: "text/markdown;charset=utf-8" }), this.title + " (" + this.version + ")" + ".md")
+                saveAs(new Blob([md], {type: "text/markdown;charset=utf-8"}), this.title + " (" + this.version + ")" + ".md")
             },
             treeFilterNode(value, data) {
                 if (!value) return true
@@ -310,8 +315,7 @@ Author:
                     this.debugDisplay = "display:block"
                     this.docDisplay = "display:none"
                     this.setCache("cache:page", "debugger")
-                }
-                else {
+                } else {
                     this.debugShowIcon = "el-icon-picture-outline-round"
                     this.debugDisplay = "display:none"
                     this.docDisplay = "display:block"
@@ -320,7 +324,7 @@ Author:
             },
             makeMethodOptions() {
                 this.methodList.forEach((m, index) => {
-                    this.methodOptions.push({ value: m, label: m })
+                    this.methodOptions.push({value: m, label: m})
                 })
             },
             makeUrlOptions(dataDict) {
@@ -339,7 +343,7 @@ Author:
                                     return true
                                 }
                             })) {
-                                urlOptionsNew.push({ value: url, label: url })
+                                urlOptionsNew.push({value: url, label: url})
                             }
 
                         }
@@ -353,7 +357,7 @@ Author:
                     let optionsNew = new Array()
                     this[options].forEach((item, index) => {
                         if (item.label !== this[optionsBak]) {
-                            optionsNew.push({ value: item.value, label: item.label })
+                            optionsNew.push({value: item.value, label: item.label})
                         }
                     })
                     this[options] = optionsNew
@@ -368,7 +372,7 @@ Author:
                         return true
                     }
                 })) {
-                    this[options].push({ value: val, label: val })
+                    this[options].push({value: val, label: val})
                 }
             },
             addHeader() {
@@ -398,18 +402,16 @@ Author:
                 resStatus = [res.status, res.statusText].join(" ")
                 resHeaders = res.headers
                 resData = res.data
-                let resHeadersdict = Object.assign({ "status code": resStatus }, resHeaders)
+                let resHeadersdict = Object.assign({"status code": resStatus}, resHeaders)
 
                 this.makeHljsPreCode("responseHeaderText", JSON.stringify(resHeadersdict, null, 4))
                 if (resHeaders["content-type"] && resHeaders["content-type"].indexOf("application/json") != -1) {
                     this.makeHljsPreCode("responseResponseText", JSON.stringify(resData))
                     this.makeHljsPreCode("responsePreviewText", JSON.stringify(resData, null, 4))
-                }
-                else if (resHeaders["content-type"] && resHeaders["content-type"].indexOf("text/html") != -1) {
+                } else if (resHeaders["content-type"] && resHeaders["content-type"].indexOf("text/html") != -1) {
                     document.getElementById("responseResponseText").innerHTML = "<code>" + resData + "</code>"
                     document.getElementById("responsePreviewText").innerHTML = "<code>" + resData + "</code>"
-                }
-                else {
+                } else {
                     this.makeHljsPreCode("responseResponseText", resData)
                     this.makeHljsPreCode("responsePreviewText", resData)
                 }
@@ -435,24 +437,21 @@ Author:
                         this.bodyTextarea.split("&").forEach((item, index) => {
                             params[item.split("=")[0]] = item.split("=")[1]
                         })
-                    }
-                    else {
+                    } else {
                         if (!headers["content-type"] || (headers["content-type"] &&
                             (headers["content-type"].indexOf("application/x-www-form-urlencoded") === -1 &&
                                 headers["content-type"].indexOf("multipart/form-data") === -1 &&
                                 headers["content-type"].indexOf("text/plain") === -1))) {
                             try {
                                 data = JSON.parse(this.bodyTextarea)
-                            }
-                            catch (err) {
+                            } catch (err) {
                                 data = this.bodyTextarea
                                 this.$notify.error({
                                     title: "Error",
                                     message: "The request body is not json"
                                 })
                             }
-                        }
-                        else {
+                        } else {
                             data = this.bodyTextarea
                         }
                     }
@@ -470,13 +469,13 @@ Author:
                     data: data,
                     params: params
                 }).then(res => {
-                    this.makeResponse(res)
-                    this.$notify({
-                        title: "Success",
-                        type: "success"
-                    })
-                    this.loading = false
-                },
+                        this.makeResponse(res)
+                        this.$notify({
+                            title: "Success",
+                            type: "success"
+                        })
+                        this.loading = false
+                    },
                     err => {
                         if (err.response) {
                             errResponse = err.response
@@ -508,16 +507,14 @@ Author:
             setCache(k, v) {
                 try {
                     localStorage.setItem(k, JSON.stringify(v));
-                }
-                catch (err) {
+                } catch (err) {
                     localStorage.setItem(k, v);
                 }
             },
             getCache(k) {
                 try {
                     cacheValue = JSON.parse(localStorage.getItem(k))
-                }
-                catch (err) {
+                } catch (err) {
                     cacheValue = localStorage.getItem(k)
                 }
                 return cacheValue
@@ -591,8 +588,7 @@ Author:
                         this.$refs.apiTree.setCurrentKey(anchor)
                         let node = this.$refs.apiTree.getNode(anchor)
                         this.treeNodeClick(node.data)
-                    }
-                    catch (err) {
+                    } catch (err) {
                     }
                 })
             }
@@ -605,13 +601,21 @@ Author:
                     this.treeData[key]["children"].forEach((con, index) => {
                         let id = con.router + "-" + con.name
                         if (con.name_extra == "") {
-                            childrenData.push({ "id": id, "full_name": con.name, "name": con.name, "router": con.router })
-                        }
-                        else {
-                            childrenData.push({ "id": id, "full_name": con.name + "(" + con.name_extra + ")", "name": con.name, "router": con.router })
+                            childrenData.push({"id": id, "full_name": con.name, "name": con.name, "router": con.router})
+                        } else {
+                            childrenData.push({
+                                "id": id,
+                                "full_name": con.name + "(" + con.name_extra + ")",
+                                "name": con.name,
+                                "router": con.router
+                            })
                         }
                     })
-                    treeDataNew.push({ "id": key, "full_name": key, "children": childrenData })
+                    treeDataNew.push({
+                        "id": key,
+                        "full_name": this.treeData[key]['name'] || key,
+                        "children": childrenData
+                    })
                 }
                 return treeDataNew
             }
