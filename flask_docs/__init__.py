@@ -45,10 +45,13 @@ class ApiDoc(object):
         JS_TEMPLATE_LOCAL = h.read()
 
     def __init__(self, app=None, title="Api Doc", version="1.0.0", description=""):
+        self.title = title
+        self.version = version
+        self.description = description
         if app is not None:
-            self.init_app(app, title, version, description)
+            self.init_app(app)
 
-    def init_app(self, app, title="Api Doc", version="1.0.0", description=""):
+    def init_app(self, app):
 
         app.config.setdefault("API_DOC_CDN_CSS_TEMPLATE", "")
         app.config.setdefault("API_DOC_CDN_JS_TEMPLATE", "")
@@ -68,7 +71,7 @@ class ApiDoc(object):
 
         with app.app_context():
             self._check_value_type(
-                {"title": title, "version": version, "description": description},
+                {"title": self.title, "version": self.version, "description": self.description},
                 str,
                 data_type="variable",
             )
@@ -150,9 +153,9 @@ class ApiDoc(object):
                         "PROJECT_NAME": PROJECT_NAME,
                         "PROJECT_VERSION": PROJECT_VERSION,
                         "host": host,
-                        "title": title,
-                        "version": version,
-                        "description": description,
+                        "title": self.title,
+                        "version": self.version,
+                        "description": self.description,
                         "noDocText": current_app.config["API_DOC_NO_DOC_TEXT"],
                         "data": data_dict,
                     }

@@ -1,18 +1,5 @@
-<!-- 
-Program:
-    Flask-Docs HTML Template
-Version:
-    0.6.1
-History:
-    Created on 2020/10/29
-    Last modified on 2021/09/06
-Author:
-    kwkw
--->
-
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,7 +12,84 @@ Author:
             display: none !important;
         }
     </style>
+    <style>
+        @media screen and (min-width: 914px) {
+            body {
+                width: 96%;
+                margin: 10px auto;
+            }
+        }
 
+        /* Webkit */
+        ::-webkit-scrollbar {
+            background: #f7f7f9;
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #e5e5e5;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #bababa
+        }
+
+        /* Firefox */
+        * {
+            scrollbar-color: #e5e5e5 #f7f7f9;
+            scrollbar-width: thin;
+        }
+
+        .debug {
+            padding-top: 25px;
+            padding-right: 20px;
+            font-size: 20px;
+            float: right;
+        }
+
+        .download {
+            padding-top: 25px;
+            padding-right: 20px;
+            font-size: 20px;
+            float: right;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 85%;
+            line-height: 1.45;
+            background-color: #f6f8fa;
+        }
+
+        @-moz-document url-prefix() {
+            pre {
+                margin-top: 12px
+            }
+        }
+
+        code,
+        textarea {
+            font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+        }
+
+        .project-name-version {
+            float: right;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #e5e5e5;
+            text-decoration: none;
+        }
+
+        .copyResponse {
+            margin-top: 54px;
+            padding-left: 6px;
+            padding-right: 20px;
+            font-size: 20px;
+            float: right;
+        }
+    </style>
     <link rel="icon" href="static/icon/book.svg" type="image/x-icon">
     <link rel="shortcut icon" href="static/icon/book.svg" type="image/x-icon">
 
@@ -37,32 +101,39 @@ Author:
     <el-card class="box-card">
         <el-container>
             <el-header>
-                <el-menu :default-active="headerIndex" class="el-menu-demo" mode="horizontal">
-                    <el-menu-item index="1">{{ titleVersion }}</el-menu-item>
+                {{ titleVersion }}
+                <p style="color: #b7b7b7;font-size: 14px;">
+                    {{ description }}
                     <el-button class="download" type="text" icon="el-icon-download" @click="download"></el-button>
                     <el-button class="debug" type="text" :icon="debugShowIcon" @click="debugShow"></el-button>
-                </el-menu>
+                </p>
             </el-header>
             <el-main v-loading="loading" :style="docDisplay">
-                <el-row>
-                    <el-col :span="8">
-                        <el-input placeholder="Filter keyword" v-model="treeFilterText" style="padding-bottom:10px">
-                        </el-input>
-                        <div :style="menuStyle">
-                            <el-tree class="filter-tree" :data="treeDataNew" :props="treeDefaultProps" node-key="id"
-                                     highlight-current :filter-node-method="treeFilterNode" ref="apiTree"
-                                     @node-click="treeNodeClick">
-                            </el-tree>
-                        </div>
-                    </el-col>
-                    <el-col :span="16" style="padding-left:20px">
-                        <div :style="contentStyle">
-                            <article class="markdown-body">
-                                <div id="md"></div>
-                            </article>
-                        </div>
-                    </el-col>
-                </el-row>
+                <el-tabs v-model="headerIndex" @tab-click="">
+                    <el-tab-pane :label="item.full_name" :name="item.id" v-for="item in treeDataNew">
+                        <el-row>
+                            <el-col :span="8">
+                                <el-input placeholder="Filter keyword" v-model="treeFilterText"
+                                          style="padding-bottom:10px">
+                                </el-input>
+                                <div :style="menuStyle">
+                                    <el-tree class="filter-tree" :data="item.children" :props="treeDefaultProps"
+                                             node-key="id"
+                                             highlight-current :filter-node-method="treeFilterNode" ref="apiTree"
+                                             @node-click="treeNodeClick">
+                                    </el-tree>
+                                </div>
+                            </el-col>
+                            <el-col :span="16" style="padding-left:20px">
+                                <div :style="contentStyle">
+                                    <article class="markdown-body">
+                                        <div v-html="markdown_text"></div>
+                                    </article>
+                                </div>
+                            </el-col>
+                        </el-row>
+                    </el-tab-pane>
+                </el-tabs>
             </el-main>
             <el-main :style="debugDisplay">
                 <el-card class="box-card">
@@ -153,7 +224,7 @@ Author:
         el: "#app",
         data: {
             loading: false,
-            headerIndex: "1",
+            headerIndex: "",
             treeFilterText: "",
             treeData: {},
             treeDefaultProps: {
@@ -162,6 +233,7 @@ Author:
             },
             PROJECT_NAME: "",
             PROJECT_VERSION: "",
+            markdown_text: "",
             title: "Documentation",
             version: "1.0.0",
             description: "",
@@ -198,8 +270,8 @@ Author:
             this.changeWindowSize()
 
             document.title = this.title
-            document.getElementById("md").innerHTML = marked("# " + this.title)
-
+            // document.getElementById("md").innerHTML = marked("# " + this.title)
+            this.markdown_text = marked("# " + this.title)
             this.makeMethodOptions()
         },
         mounted: function () {
@@ -219,6 +291,33 @@ Author:
                 this.menuStyle = this.menuContentStyle + screenHeightMenu + "px"
                 this.contentStyle = this.menuContentStyle + screenHeightContent + "px"
             },
+            treeDataNew() {
+                let treeDataNew = new Array()
+                for (key in this.treeData) {
+                    let childrenData = new Array()
+                    this.treeData[key]["children"].forEach((con, index) => {
+                        let id = con.router + "-" + con.name
+                        if (con.name_extra == "") {
+                            childrenData.push({"id": id, "full_name": con.name, "name": con.name, "router": con.router})
+                        } else {
+                            childrenData.push({
+                                "id": id,
+                                "full_name": con.name + "(" + con.name_extra + ")",
+                                "name": con.name,
+                                "router": con.router
+                            })
+                        }
+                    })
+                    treeDataNew.push({
+                        "id": key,
+                        "full_name": this.treeData[key]['name'] || key,
+                        "children": childrenData
+                    })
+                }
+                this.treeDataNew = treeDataNew
+                this.headerIndex = Object.keys(this.treeData)[0]
+                console.log(this.headerIndex)
+            },
             getData() {
                 this.loading = true
                 axios.get("data").then(res => {
@@ -236,10 +335,13 @@ Author:
                         if (this.description != "") {
                             md += "\n> " + this.description
                         }
-                        document.getElementById("md").innerHTML = marked(md)
+                        this.treeDataNew()
                         this.makeUrlOptions(res.data.data)
                         this.getUrlCache()
                         this.jumpAnchor()
+                        // document.getElementById("md").innerHTML = marked(md)
+                        this.markdown_text = marked(md)
+
                         this.loading = false
                     },
                     err => {
@@ -302,7 +404,8 @@ Author:
                             md += con.doc_md
                         }
                     })
-                    document.getElementById("md").innerHTML = marked(md)
+                    this.markdown_text = marked(md)
+                    // document.getElementById("md").innerHTML = marked(md)
                     document.querySelectorAll("pre code").forEach((block) => {
                         hljs.highlightElement(block)
                     })
@@ -593,33 +696,6 @@ Author:
                 })
             }
         },
-        computed: {
-            treeDataNew() {
-                let treeDataNew = new Array()
-                for (key in this.treeData) {
-                    let childrenData = new Array()
-                    this.treeData[key]["children"].forEach((con, index) => {
-                        let id = con.router + "-" + con.name
-                        if (con.name_extra == "") {
-                            childrenData.push({"id": id, "full_name": con.name, "name": con.name, "router": con.router})
-                        } else {
-                            childrenData.push({
-                                "id": id,
-                                "full_name": con.name + "(" + con.name_extra + ")",
-                                "name": con.name,
-                                "router": con.router
-                            })
-                        }
-                    })
-                    treeDataNew.push({
-                        "id": key,
-                        "full_name": this.treeData[key]['name'] || key,
-                        "children": childrenData
-                    })
-                }
-                return treeDataNew
-            }
-        },
         watch: {
             treeFilterText(val) {
                 this.$refs.apiTree.filter(val)
@@ -640,84 +716,5 @@ Author:
         }
     })
 </script>
-
-<style>
-    @media screen and (min-width: 914px) {
-        body {
-            width: 96%;
-            margin: 10px auto;
-        }
-    }
-
-    /* Webkit */
-    ::-webkit-scrollbar {
-        background: #f7f7f9;
-        width: 8px;
-        height: 8px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #e5e5e5;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: #bababa
-    }
-
-    /* Firefox */
-    * {
-        scrollbar-color: #e5e5e5 #f7f7f9;
-        scrollbar-width: thin;
-    }
-
-    .debug {
-        padding-top: 25px;
-        padding-right: 20px;
-        font-size: 20px;
-        float: right;
-    }
-
-    .download {
-        padding-top: 25px;
-        padding-right: 20px;
-        font-size: 20px;
-        float: right;
-    }
-
-    pre {
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        font-size: 85%;
-        line-height: 1.45;
-        background-color: #f6f8fa;
-    }
-
-    @-moz-document url-prefix() {
-        pre {
-            margin-top: 12px
-        }
-    }
-
-    code,
-    textarea {
-        font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
-    }
-
-    .project-name-version {
-        float: right;
-        margin-bottom: 6px;
-        font-size: 12px;
-        color: #e5e5e5;
-        text-decoration: none;
-    }
-
-    .copyResponse {
-        margin-top: 54px;
-        padding-left: 6px;
-        padding-right: 20px;
-        font-size: 20px;
-        float: right;
-    }
-</style>
 
 </html>
