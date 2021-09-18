@@ -110,17 +110,16 @@
             </el-header>
             <el-main v-loading="loading" :style="docDisplay">
                 <el-tabs v-model="headerIndex" @tab-click="">
-                    <el-tab-pane :label="item.full_name" :name="item.id" v-for="item in treeDataNew">
+                    <el-tab-pane :label="item.label" v-for="(item,k) in treeData">
                         <el-row>
                             <el-col :span="8">
                                 <el-input placeholder="Filter keyword" v-model="treeFilterText"
                                           style="padding-bottom:10px">
                                 </el-input>
                                 <div :style="menuStyle">
-                                    <el-tree class="filter-tree" :data="item.children" :props="treeDefaultProps"
-                                             node-key="id"
-                                             highlight-current :filter-node-method="treeFilterNode" ref="apiTree"
-                                             @node-click="treeNodeClick">
+                                    <el-tree class="filter-tree" :data="item.children"
+                                             node-key="id" highlight-current :filter-node-method="treeFilterNode"
+                                             ref="apiTree" @node-click="treeNodeClick">
                                     </el-tree>
                                 </div>
                             </el-col>
@@ -231,6 +230,10 @@
                 label: "full_name",
                 children: "children"
             },
+            defaultProps: {
+                children: 'children',
+                label: 'label'
+            },
             PROJECT_NAME: "",
             PROJECT_VERSION: "",
             markdown_text: "",
@@ -291,33 +294,6 @@
                 this.menuStyle = this.menuContentStyle + screenHeightMenu + "px"
                 this.contentStyle = this.menuContentStyle + screenHeightContent + "px"
             },
-            treeDataNew() {
-                let treeDataNew = new Array()
-                for (key in this.treeData) {
-                    let childrenData = new Array()
-                    this.treeData[key]["children"].forEach((con, index) => {
-                        let id = con.router + "-" + con.name
-                        if (con.name_extra == "") {
-                            childrenData.push({"id": id, "full_name": con.name, "name": con.name, "router": con.router})
-                        } else {
-                            childrenData.push({
-                                "id": id,
-                                "full_name": con.name + "(" + con.name_extra + ")",
-                                "name": con.name,
-                                "router": con.router
-                            })
-                        }
-                    })
-                    treeDataNew.push({
-                        "id": key,
-                        "full_name": this.treeData[key]['name'] || key,
-                        "children": childrenData
-                    })
-                }
-                this.treeDataNew = treeDataNew
-                this.headerIndex = Object.keys(this.treeData)[0]
-                console.log(this.headerIndex)
-            },
             getData() {
                 this.loading = true
                 axios.get("data").then(res => {
@@ -335,13 +311,12 @@
                         if (this.description != "") {
                             md += "\n> " + this.description
                         }
-                        this.treeDataNew()
-                        this.makeUrlOptions(res.data.data)
+                        // this.treeDataNew()
+                        // this.treeDataNew = res.data.data
+                        // this.makeUrlOptions(res.data.data)
                         this.getUrlCache()
                         this.jumpAnchor()
-                        // document.getElementById("md").innerHTML = marked(md)
                         this.markdown_text = marked(md)
-
                         this.loading = false
                     },
                     err => {
@@ -394,22 +369,17 @@
                 let desStr = value.toLowerCase()
                 return srcStr.indexOf(desStr) !== -1
             },
-            treeNodeClick(data) {
+            treeNodeClick(data, node, self) {
                 if (data.router != null) {
                     let md = ""
-                    this.treeData[data.router]["children"].forEach((con, index) => {
-                        if (con.name == data.name) {
-                            md += "# " + data.full_name + "\n\n"
-                            md = this.make_md(md, con)
-                            md += con.doc_md
-                        }
-                    })
+                    md += "# " + data.label + "\n\n"
+                    md = this.make_md(md, data)
+                    md += data.doc_md
                     this.markdown_text = marked(md)
-                    // document.getElementById("md").innerHTML = marked(md)
                     document.querySelectorAll("pre code").forEach((block) => {
                         hljs.highlightElement(block)
                     })
-                    this.dropAnchor(data.id)
+                    this.dropAnchor(node?.parent?.data?.id, data.id)
                 }
             },
             debugShow() {
@@ -676,22 +646,28 @@
                 }
                 document.body.removeChild(input)
             },
-            dropAnchor(anchor) {
+            dropAnchor(parent, anchor) {
                 let currentUrl = window.location.href
                 let hostUrl = currentUrl.split("#")[0]
-                history.pushState("", "", hostUrl + "#" + anchor)
+                history.pushState("", "", hostUrl + "#" + this.headerIndex + '-' + parent + '-' + anchor)
             },
             jumpAnchor() {
                 this.$nextTick(function () {
                     try {
                         let currentUrl = decodeURI(window.location.href)
-                        let anchor = currentUrl.split("#")[1]
-                        let anchorParent = anchor.split("-")[0]
-                        this.$refs.apiTree.store.nodesMap[anchorParent].expanded = true
-                        this.$refs.apiTree.setCurrentKey(anchor)
-                        let node = this.$refs.apiTree.getNode(anchor)
-                        this.treeNodeClick(node.data)
+                        let data = currentUrl.split("#")[1].split("-")
+                        let tab = data[0]
+                        let parent = data[1]
+                        let anchorParent = ''
+                        let anchor = data[2]
+                        this.headerIndex = tab
+                        let apiTree = this.$refs.apiTree[Number(tab)]
+                        apiTree.store.nodesMap[parent].expanded = true
+                        apiTree.setCurrentKey(anchor)
+                        let node = apiTree.getNode(anchor)
+                        this.treeNodeClick(node.data, node)
                     } catch (err) {
+                        console.log('err', err)
                     }
                 })
             }

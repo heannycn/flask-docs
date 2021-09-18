@@ -1,20 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-
-"""
-Program:
-    Flask-Docs
-Version:
-    0.5.8
-History:
-    Created on 2018/05/20
-    Last modified on 2021/08/19
-Author:
-    kwkw
-"""
-
 import logging
 import os
+import json
 from functools import wraps
 
 from flask import Blueprint, current_app, jsonify, request
@@ -146,7 +134,8 @@ class ApiDoc(object):
                 data_dict.update(self._get_restful_methodview_api_data())
 
                 # Api
-                data_dict.update(self._get_api_data())
+                data_dict.update(self._get_api_datas())
+                # data_dict.update(self._get_api_data())
 
                 return jsonify(
                     {
@@ -258,6 +247,98 @@ class ApiDoc(object):
                 data_dict[name]["children"].sort(key=lambda x: x["name"])
 
         return data_dict
+
+    def _get_api_datas(self):
+
+        data_dict = {}
+
+        for rule in current_app.url_map.iter_rules():
+            rule_s = str(rule).split("/")
+            f = rule_s[1]
+            if current_app.config['API_DOC_MEMBER_NAME'] is False:
+                member_list = current_app.config["API_DOC_MEMBER"]
+            else:
+                member_list = current_app.config["API_DOC_MEMBER"].keys()
+            if f not in member_list:
+                if f.split('.')[-1] not in ['html', 'shtml']:
+                    continue
+                elif current_app.config['API_DOC_TEMP'] is True:
+                    if current_app.config['API_DOC_TEMP'] is True:
+                        f = 'pages'
+                        if current_app.config['API_DOC_MEMBER_NAME'] is True:
+                            current_app.config["API_DOC_MEMBER"].setdefault(f, '页面')
+                        else:
+                            current_app.config["API_DOC_MEMBER"].append('pages')
+                else:
+                    continue
+            f_capitalize = f.capitalize()
+            data_dict.setdefault(f_capitalize, {"children": {}})
+            if current_app.config['API_DOC_MEMBER_NAME'] is True:
+                data_dict[f_capitalize]["label"] = current_app.config["API_DOC_MEMBER"][f].capitalize()
+            if len(rule_s) == 2:
+                data_dict[f_capitalize]['children'].setdefault('main', [])
+                api = self._get_body_data(rule, f_capitalize)
+                data_dict[f_capitalize]['children']['main'].append(api)
+            else:
+                f2 = rule_s[2]
+                data_dict[f_capitalize]['children'].setdefault(f2, [])
+                api = self._get_body_data(rule, f_capitalize)
+                data_dict[f_capitalize]['children'][f2].append(api)
+            pass
+        redata = {}
+        for k, v in data_dict.items():
+            children = v['children']
+            d = []
+            for k1, v1 in children.items():
+                d.append({'id': k1, 'label': k1, 'children': v1})
+            redata[k] = {'id': k, 'label': v.get('label', k), 'children': d}
+        return redata
+
+    def _get_body_data(self, rule, f_capitalize):
+        api = {
+            "id": "",
+            "label": "",
+            "name_extra": "",
+            "url": "",
+            "method": "",
+            "doc": "",
+            "doc_md": "",
+            "router": f_capitalize,
+            "api_type": "api",
+        }
+        try:
+            name = ""
+            func = current_app.view_functions[rule.endpoint]
+            name = self._get_api_name(func)
+            url = str(rule)
+            method = " ".join(
+                [
+                    r
+                    for r in rule.methods
+                    if r in current_app.config["API_DOC_METHODS_LIST"]
+                ]
+            )
+            if method:
+                url = "{}\t[{}]".format(url, "\t".join(method.split(" ")))
+
+            doc = self._get_api_doc(func)
+            (
+                api["doc"],
+                api["name_extra"],
+                api["doc_md"],
+            ) = self._get_doc_name_extra_doc_md(doc)
+
+            api["label"] = name + "(" + api["name_extra"] + ")" if api["name_extra"] else name
+            api["url"] = url
+            api["id"] = name
+            api["method"] = method
+        except Exception as e:
+            logger.error(
+                "{} error - {} - {} - {}".format(
+                    PROJECT_NAME, e, f_capitalize, name
+                )
+            )
+        return api
 
     def _get_api_data(self):
         """Api"""
