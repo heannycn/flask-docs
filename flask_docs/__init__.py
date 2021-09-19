@@ -290,8 +290,8 @@ class ApiDoc(object):
             children = v['children']
             d = []
             for k1, v1 in children.items():
-                d.append({'id': k1, 'label': k1, 'children': v1})
-            redata[k] = {'id': k, 'label': v.get('label', k), 'children': d}
+                d.append({'id': k1, 'label': k1, 'children': sorted(v1, key=lambda x: x["label"])})
+            redata[k] = {'id': k, 'label': v.get('label', k), 'children': sorted(d, key=lambda x: x["label"])}
         return redata
 
     def _get_body_data(self, rule, f_capitalize):
