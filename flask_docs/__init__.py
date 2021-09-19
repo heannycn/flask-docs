@@ -451,7 +451,7 @@ class ApiDoc(object):
 
     def _clean_doc(self, doc_src):
         return (
-            doc_src.split("\n\n")[0]
+            doc_src.strip().split("\n\n")[0]
                 .split("\n")[0]
                 .strip(" ")
                 .strip("\n\n")
