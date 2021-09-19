@@ -469,7 +469,7 @@ class ApiDoc(object):
             name_extra = ""
 
         doc = (
-            doc.replace(name_extra, "", 1)
+            doc.strip().replace(name_extra, "", 1)
                 .rstrip(" ")
                 .strip("\n\n")
                 .rstrip(" ")
