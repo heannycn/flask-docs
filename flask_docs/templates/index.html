@@ -210,7 +210,8 @@
                 </el-card>
             </el-main>
         </el-container>
-        <a class="project-name-version" href="https://gitee.com/heanny/flask-docs.git" target="_blank">{{ PROJECT_NAME }}
+        <a class="project-name-version" href="https://gitee.com/heanny/flask-docs.git"
+           target="_blank">{{ PROJECT_NAME }}
             v{{ PROJECT_VERSION }}</a>
     </el-card>
 </div>
@@ -313,7 +314,7 @@
                         }
                         // this.treeDataNew()
                         // this.treeDataNew = res.data.data
-                        // this.makeUrlOptions(res.data.data)
+                        this.makeUrlOptions(res.data.data)
                         this.getUrlCache()
                         this.jumpAnchor()
                         this.markdown_text = marked(md)
@@ -365,7 +366,7 @@
             },
             treeFilterNode(value, data) {
                 if (!value) return true
-                let srcStr = data.full_name.toLowerCase()
+                let srcStr = data.label.toLowerCase()
                 let desStr = value.toLowerCase()
                 return srcStr.indexOf(desStr) !== -1
             },
@@ -403,23 +404,27 @@
             makeUrlOptions(dataDict) {
                 let urlOptionsNew = new Array()
                 for (key in dataDict) {
-                    dataDict[key]["children"].forEach((con, index) => {
-                        let urls = new Array()
-                        urls = con.url.split(" ")
-                        if (urls.length == 1) {
-                            urls = [urls[0].split("\t")[0]]
-                        }
-                        for (i = 0; i < urls.length; i++) {
-                            let url = urls[i].split("\t")[0]
-                            if (!urlOptionsNew.some(item => {
-                                if (item.label == url) {
-                                    return true
-                                }
-                            })) {
-                                urlOptionsNew.push({value: url, label: url})
+                    dataDict[key]["children"].forEach((cons, i) => {
+                        console.log(cons)
+                        cons['children'].forEach((con, index) => {
+                            let urls = new Array()
+                            console.log(con)
+                            urls = con.url.split(" ")
+                            if (urls.length == 1) {
+                                urls = [urls[0].split("\t")[0]]
                             }
+                            for (i = 0; i < urls.length; i++) {
+                                let url = urls[i].split("\t")[0]
+                                if (!urlOptionsNew.some(item => {
+                                    if (item.label == url) {
+                                        return true
+                                    }
+                                })) {
+                                    urlOptionsNew.push({value: url, label: url})
+                                }
+                            }
+                        })
 
-                        }
                     })
                 }
                 this.urlOptions = urlOptionsNew
@@ -674,7 +679,7 @@
         },
         watch: {
             treeFilterText(val) {
-                this.$refs.apiTree.filter(val)
+                this.$refs.apiTree[Number(this.headerIndex)].filter(val)
             },
             methodValue(val) {
                 this.getBodyCache()
